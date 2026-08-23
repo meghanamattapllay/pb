@@ -1,0 +1,17 @@
+n=int(input())
+d=list(map(int, input().split())) 
+left=0
+right=n-1
+sum1=0
+sum3=0
+ans=0
+while left<=right:
+    if sum1<=sum3:
+        sum1+=d[left]
+        left+=1
+    else:
+        sum3+=d[right]
+        right-=1
+    if sum1==sum3:
+        ans=sum1
+print(ans)
