@@ -1,0 +1,15 @@
+a=list(map(int,input().split()))
+x=int(input())
+l=0
+r=len(a)-1
+while l<=r:
+    m=(l+r)//2
+    if a[m]==x:
+        print(m)
+        break
+    if a[m]<x:
+        l=m+1
+    else:
+        r=m-1
+else:
+    print(-1)
