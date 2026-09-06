@@ -1,0 +1,51 @@
+class Node:
+    def __init__(self,data):
+        self.data=data
+        self.left=None
+        self.right=None
+def build(a):
+    if not a or a[0]==-1:
+        return None
+    root=Node(a[0])
+    q=[root]
+    i=1
+    while q and i<len(a):
+        x=q.pop(0)
+        if a[i]!=-1:
+            x.left=Node(a[i])
+            q.append(x.left)
+        i+=1
+        if i<len(a) and a[i]!=-1:
+            x.right=Node(a[i])
+            q.append(x.right)
+        i+=1
+    return root
+def boundary(root):
+    if not root:
+        return
+    print(root.data,end=" ")
+    x=root.left
+    while x:
+        if x.left or x.right:
+            print(x.data,end=" ")
+        x=x.left if x.left else x.right
+    def leaves(x):
+        if x:
+            leaves(x.left)
+            if not x.left and not x.right:
+                print(x.data,end=" ")
+            leaves(x.right)
+    leaves(root.left)
+    leaves(root.right)
+    a=[]
+    x=root.right
+    while x:
+        if x.left or x.right:
+            a.append(x.data)
+        x=x.right if x.right else x.left
+    for x in a[::-1]:
+        print(x,end=" ")
+
+a=list(map(int,input().split()))
+root=build(a)
+boundary(root)
