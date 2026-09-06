@@ -1,0 +1,9 @@
+class Solution:
+    def lastStoneWeightII(self, stones: List[int]) -> int:
+        s=sum(stones)
+        t=s//2
+        dp=[0]*(t+1)
+        for x in stones:
+            for j in range(t,x-1,-1):
+                dp[j]=max(dp[j],dp[j-x]+x)
+        return s-2*dp[t]
