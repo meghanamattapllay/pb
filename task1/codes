@@ -1,0 +1,236 @@
+1 Longest Subarray with Sum K
+
+class Solution:
+    def longestSubarray(self, arr, k):  
+        # code here
+        p=0
+        first={}
+        ans=0
+        for i in range(len(arr)):
+            p+=arr[i]
+            if p==k:
+                ans=i+1
+            if p-k in first:
+                ans=max(ans,i-first[p-k])
+            if p not in first:
+                first[p]=i
+        return ans
+
+
+2 Minimum Window Containing All Required Skills
+
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        m=len(s)
+        n=len(t)
+        if n>m:
+            return ""
+        target={}
+        for ch in t:
+            target[ch]=target.get(ch,0)+1
+        count=0
+        minLen=float('inf')
+        start=0
+        dict2={}
+        left=0
+        for right in range(m):
+            ch=s[right]
+            dict2[ch]=dict2.get(ch,0)+1
+            if target.get(ch) and dict2[ch]==target[ch]:
+                count+=1
+            while count==len(target):
+                if minLen>right-left+1:
+                    minLen=right-left+1
+                    start=left
+                leftChar=s[left]
+                dict2[leftChar]-=1
+                if dict2[leftChar]<target[leftChar]:
+                    count-=1
+        return s[start:start+minLen] if minLen!=float('inf') else ""
+
+3 Merge Overlapping Intervals   
+
+class Solution:
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals.sort(key=lambda x:x[0])
+        merged=[]
+        for interval in intervals:
+            if not merged or merged[-1][1]<interval[0]:
+                merged.append(interval)
+            else:
+                merged[-1][1]=max(merged[-1][1],interval[1])
+        return merged
+
+
+4 Kth Largest Element in a Stream
+
+class Solution:
+    def kthLargest(self, arr, k):
+        # code here 
+        res=[]
+        s=[]
+        for x in arr:
+            i=0
+            while i<len(s) and s[i]<x:
+                i+=1
+            s.insert(i,x)
+            if len(s)<k:
+                res.append(-1)
+            else:
+                res.append(s[-k])
+        return res
+
+
+5 Detect and Remove Cycle in Linked List
+
+class Solution:
+    def removeLoop(self, head):
+        # code here
+        slow=head
+        fast=head
+        while fast and fast.next:
+            slow=slow.next
+            fast=fast.next.next
+            if slow==fast:
+                break
+        else:
+            return
+        slow=head
+        if slow==fast:
+            while fast.next!=slow:
+                fast=fast.next
+            fast.next=None
+        else:
+            while slow.next!=fast.next:
+                slow=slow.next
+                fast=fast.next
+            fast.next=None
+
+6 Lowest Common Ancestor in Binary Tree
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        if root==None or root==p or root==q:
+            return root
+        left=self.lowestCommonAncestor(root.left,p,q)
+        right=self.lowestCommonAncestor(root.right,p,q)
+        if left and right:
+            return root
+        if left:
+            return left
+        return right
+
+
+7 Shortest Path in a Binary Matrix
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: list[list[int]]) -> int:
+        n=len(grid)
+        if grid[0][0]==1 or grid[n-1][n-1]==1:
+            return -1
+        q=deque()
+        q.append((0,0,1))
+        visited={(0,0)}
+        di=[(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+        while q:
+            r,c,d=q.popleft()
+            if r==n-1 and c==n-1:
+                return d
+            for dr,dc in di:
+                nr=r+dr
+                nc=c+dc
+                if 0<=nr<n and 0<=nc<n and grid[nr][nc]==0 and (nr,nc) not in visited:
+                    visited.add((nr,nc))
+                    q.append((nr,nc,d+1))
+        return -1
+
+8 Course Completion Order
+
+class Solution:
+    def findOrder(self, numCourses: int, prerequisites: list[list[int]]) -> list[int]:
+        graph=[[] for i in range(numCourses)]
+        indegree=[0]*numCourses
+        for course,pre in prerequisites:
+            graph[pre].append(course)
+            indegree[course]+=1
+        q=deque()
+        for i in range(numCourses):
+            if indegree[i]==0:
+                q.append(i)
+
+        result=[]
+
+        while q:
+            course=q.popleft()
+            result.append(course)
+            for nxt in graph[course]:
+                indegree[nxt]-=1
+                if indegree[nxt]==0:
+                    q.append(nxt)
+        if len(result)==numCourses:
+            return result
+        return []
+
+
+9 Minimum Coins for Amount
+
+class Solution:
+    def minCoins(self, coins: list[int], sum: int) -> int:
+        # code here
+        dp=[float('inf')]*(sum+1)
+        dp[0]=0
+        for i in range(1,sum+1):
+            for coin in coins:
+                if coin<=i:
+                    dp[i]=min(dp[i],dp[i-coin]+1)
+        if dp[sum]==float('inf'):
+            return -1
+        return dp[sum]
+
+10 Range Maximum Query with Updates
+
+class SegmentTree:
+    def __init__(self,arr):
+        self.n=len(arr)
+        self.tree=[float('-inf')]*(4*self.n)
+        self.build(arr,1,0,self.n-1)
+
+    def build(self,arr,node,l,r):
+        if l==r:
+            self.tree[node]=arr[l]
+            return
+        mid=(l+r)//2
+        self.build(arr,node*2,l,mid)
+        self.build(arr,node*2+1,mid+1,r)
+        self.tree[node]=max(self.tree[node*2],self.tree[node*2+1])
+    def update(self,node,l,r,index,value):
+        if l==r:
+            self.tree[node]=value
+            return
+        mid=(l+r)//2
+        if index<=mid:
+            self.update(node*2,l,mid,index,value)
+        else:
+            self.update(node*2+1,mid+1,r,index,value)
+        self.tree[node]=max(self.tree[node*2],self.tree[node*2+1])
+    def query(self,node,l,r,ql,qr):
+        if qr<l or r<ql:
+            return float('-inf')
+        if ql<=l and r<=qr:
+            return self.tree[node]
+        mid=(l+r)//2
+        left=self.query(node*2,l,mid,ql,qr)
+        right=self.query(node*2+1,mid+1,r,ql,qr)
+        return max(left,right)
+    def point_update(self,index,value):
+        self.update(1,0,self.n-1,index,value)
+    def range_max(self,left,right):
+        return self.query(1,0,self.n-1,left,right)
+     
+arr=[2,1,5,3,4]
+st=SegmentTree(arr)
+print(st.range_max(1,3))
+st.point_update(2,6)
+print(st.range_max(1,3))
+st.point_update(4,0)
+print(st.range_max(0,4))
