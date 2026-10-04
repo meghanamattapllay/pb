@@ -1,0 +1,71 @@
+create database see;
+use see;
+
+create table departments (dept_id int,dept_name varchar(50));
+
+insert into departments values (1,'it'),(2,'hr'),(3,'finance'),(4,'sales'),(5,'marketing');
+
+create table employees (emp_id int,emp_name varchar(50),dept_id int,salary int,manager_id int,join_date date);
+
+insert into employees values (1,'meghana',1,90000,null,'2023-01-10'),(2,'megha',1,70000,1,'2023-02-15'),(3,'mani',1,60000,1,'2023-03-20'),(4,'arun',2,80000,null,'2022-06-10'),(5,'anil',2,50000,4,'2023-01-15'),(6,'sai',2,45000,4,'2023-04-12'),(7,'ravi',3,95000,null,'2021-08-10'),(8,'kiran',3,65000,7,'2022-02-20'),(9,'rahul',4,75000,null,'2022-09-15'),(10,'priya',4,55000,9,'2023-05-10'),(11,'divya',5,60000,null,'2023-06-10');
+
+create table projects (project_id int,project_name varchar(50),dept_id int,budget int);
+
+insert into projects values (101,'ai project',1,500000),(102,'web project',1,300000),(103,'hr portal',2,200000),(104,'finance system',3,400000),(105,'sales app',4,350000);
+
+create table employeeprojects (emp_id int,project_id int,hours_worked int);
+
+insert into employeeprojects values (1,101,120),(2,101,100),(3,101,100),(2,102,150),(3,102,120),(4,103,100),(5,103,80),(7,104,160),(8,104,120),(9,105,140),(10,105,100);
+
+create table orders (order_id int,customer_id int,order_date date,amount int,status varchar(20));
+
+insert into orders values (1,101,'2026-01-10',30000,'completed'),(2,101,'2026-02-15',25000,'completed'),(3,101,'2026-03-20',30000,'completed'),(4,102,'2026-01-12',60000,'completed'),(5,102,'2026-02-20',50000,'completed'),(6,103,'2026-03-10',15000,'completed'),(7,103,'2026-04-15',10000,'completed'),(8,104,'2026-01-20',120000,'completed'),(9,105,'2026-02-10',18000,'pending'),(10,105,'2026-03-15',25000,'completed');
+
+-- 1
+
+select d.dept_id,d.dept_name,count(e.emp_id) as employee_count,coalesce(avg(e.salary),0) as average_salary,coalesce(min(e.salary),0) as minimum_salary,coalesce(max(e.salary),0) as maximum_salary from departments d left join employees e on d.dept_id=e.dept_id group by d.dept_id,d.dept_name;
+
+
+-- 2
+
+with ranked as (select emp_name,dept_id,salary,dense_rank() over(partition by dept_id order by salary desc) as rnk from employees) select emp_name,dept_id,salary from ranked where rnk=2;
+
+
+-- 3
+
+select emp_name,dept_id,salary from employees e where salary>(select avg(salary) from employees where dept_id=e.dept_id);
+
+
+-- 4
+
+select m.emp_name as manager_name,m.salary as manager_salary,count(e.emp_id) as team_count,sum(e.salary) as team_salary from employees m join employees e on m.emp_id=e.manager_id group by m.emp_id,m.emp_name,m.salary having count(e.emp_id)>=2;
+
+
+-- 5
+
+with r as (select p.project_id,p.project_name,e.emp_id,e.emp_name,ep.hours_worked,dense_rank() over(partition by p.project_id order by ep.hours_worked desc) as rnk from employeeprojects ep join employees e on ep.emp_id=e.emp_id join projects p on ep.project_id=p.project_id) select project_id,project_name,emp_id,emp_name,hours_worked from r where rnk<=2 order by project_id,rnk;
+
+
+-- 6
+
+select distinct d.dept_id,d.dept_name from departments d join employees e on d.dept_id=e.dept_id where not exists (select 1 from projects p where p.dept_id=d.dept_id);
+
+
+-- 7
+
+with daily_revenue as (select order_date,sum(amount) as daily_revenue from orders where status='completed' group by order_date) select order_date,daily_revenue,sum(daily_revenue) over(order by order_date) as cumulative_revenue from daily_revenue;
+
+
+-- 8
+
+with customer_total as (select customer_id,sum(amount) as total_amount from orders where status='completed' group by customer_id) select customer_id,total_amount,case when total_amount>=100000 then 'platinum' when total_amount>=50000 then 'gold' when total_amount>=20000 then 'silver' else 'bronze' end as customer_class from customer_total;
+
+
+-- 9
+
+with monthly_orders as (select distinct customer_id,str_to_date(date_format(order_date,'%Y-%m-01'),'%Y-%m-%d') as month_start from orders),numbered as (select customer_id,month_start,lead(month_start,1) over(partition by customer_id order by month_start) as next_month,lead(month_start,2) over(partition by customer_id order by month_start) as month_after_next from monthly_orders) select distinct customer_id from numbered where next_month=date_add(month_start,interval 1 month) and month_after_next=date_add(month_start,interval 2 month);
+
+
+-- 10
+
+with salary_rank as (select emp_name,dept_id,salary,max(salary) over(partition by dept_id) as highest_salary,min(salary) over(partition by dept_id) as lowest_salary from employees) select emp_name,dept_id,salary,case when salary=highest_salary then 'highest' when salary=lowest_salary then 'lowest' end as salary_type,highest_salary-lowest_salary as salary_difference from salary_rank where salary=highest_salary or salary=lowest_salary;
